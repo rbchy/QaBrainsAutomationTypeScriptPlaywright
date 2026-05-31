@@ -1,0 +1,25 @@
+{
+  "name": "qabrains-automation-playwright-ts",
+  "version": "1.0.0",
+  "description": "QA Brains Automation - TypeScript + Playwright + Cucumber",
+  "scripts": {
+    "test": "cucumber-js",
+    "test:smoke": "cucumber-js --tags @smoke",
+    "test:regression": "cucumber-js --tags @regression",
+    "test:login": "cucumber-js --tags @Login",
+    "test:logout": "cucumber-js --tags @Logout",
+    "test:registration": "cucumber-js --tags @Registration",
+    "test:cart": "cucumber-js --tags @CartCheckout"
+  },
+  "dependencies": {
+    "@playwright/test": "^1.53.0",
+    "playwright": "^1.53.0"
+  },
+  "devDependencies": {
+    "@cucumber/cucumber": "^11.0.0",
+    "@types/node": "^22.0.0",
+    "typescript": "^5.0.0",
+    "ts-node": "^10.9.0",
+    "dotenv": "^16.4.0"
+  }
+}
