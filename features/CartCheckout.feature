@@ -1,18 +1,21 @@
 Feature: Cart Functionality
-  As a user
-  I want to manage products in the cart
-  So that I can complete my purchase smoothly
+  As a shopper on the e-commerce demo
+  I want to add and remove products
+  So that my cart holds exactly what I chose
 
   Background:
-    Given User launches the application
+    Given User is logged in to the e-commerce site
+    And The cart is empty
 
-  @smoke @regression
+  @smoke @regression @Cart
   Scenario: Add product to cart
-    When User adds products to cart
-    Then Product should appear in cart
+    When User adds 1 products to cart
+    Then 1 products should be in the cart
+    And The cart should still hold 1 products after reloading the shop
 
-  @smoke @regression
+  @smoke @regression @Cart
   Scenario: Remove product from cart
-    When User adds products to cart
+    When User adds 1 products to cart
     And User removes product from cart
-    Then Cart should be empty
+    Then 0 products should be in the cart
+    And The cart should still hold 0 products after reloading the shop

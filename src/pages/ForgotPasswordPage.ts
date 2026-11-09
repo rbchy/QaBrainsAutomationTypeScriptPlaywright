@@ -1,108 +1,39 @@
 // =============================================
-// src/pages/ForgotPasswordPage.ts
-// Java-এর ForgotPasswordPage.java এর TypeScript equivalent
+// src/pages/ForgotPasswordPage.ts — the Forgot Password demo module
 // =============================================
 
-import { Page, Locator } from "playwright";
+import { Page, Locator, expect } from "@playwright/test";
 
 export class ForgotPasswordPage {
-  private readonly page: Page;
-  private readonly emailField: Locator;
-  private readonly submitBtn: Locator;
+  readonly email: Locator;
+  private readonly submitButton: Locator;
 
-  constructor(page: Page) {
-    this.page = page;
-    this.emailField = page.locator("#email");
-    this.submitBtn = page
-      .locator(
-        "#inner-body form button, " +
-          "form button[type='submit'], " +
-          "button:has-text('Submit'), " +
-          "button:has-text('Reset'), " +
-          "input[type='submit']"
-      )
-      .first();
+  constructor(private readonly page: Page) {
+    this.email = page.locator("#email");
+    this.submitButton = page.locator("form button[type='submit']").first();
   }
 
-  async enterEmail(email: string): Promise<void> {
-    await this.emailField.fill(email);
+  async open(): Promise<void> {
+    await this.page.goto("/forgot-password");
+    await expect(this.email).toBeVisible();
   }
 
-  async clickSubmit(): Promise<void> {
-    await this.submitBtn.click();
-    await this.page.waitForLoadState();
-    await this.page.waitForTimeout(1000);
+  async requestReset(email: string): Promise<void> {
+    await this.email.fill(email);
+    await this.submitButton.click();
   }
 
-  async getSuccessMessage(): Promise<string> {
-    const selectors = [
-      "#success-msg",
-      ".success-message",
-      ".alert-success",
-      "[class*='success']",
-      "text=/reset/i",
-      "text=/sent/i",
-      "text=/check your email/i",
-      "p.success, div.success",
-    ];
-
-    for (const sel of selectors) {
-      try {
-        const el = this.page.locator(sel).first();
-        if (await el.isVisible()) {
-          const text = (await el.textContent())?.trim() ?? "";
-          console.log(`✅ ForgotPassword success msg [${sel}]: ${text}`);
-          return text;
-        }
-      } catch {
-        // পরের selector চেষ্টা
-      }
-    }
-
-    const body = ((await this.page.locator("body").textContent()) ?? "").toLowerCase();
-    if (body.includes("reset") || body.includes("sent") || body.includes("check your email")) {
-      return "reset";
-    }
-
-    console.log(`⚠ ForgotPassword: no success message found. URL: ${this.page.url()}`);
-    return "";
+  /** A valid e-mail adds ?forgot=true and shows the success banner. */
+  async expectSuccess(expected: string): Promise<void> {
+    await expect(this.page).toHaveURL(/forgot=true/);
+    await expect(this.page.locator("#success-msg")).toBeVisible();
+    await expect(this.page.locator("#success-msg")).toContainText(expected);
   }
 
-  async getErrorMessage(): Promise<string> {
-    const selectors = [
-      "#email + span",
-      "#email ~ span",
-      "#email + div",
-      "#email ~ .error",
-      ".field-error",
-      ".alert-danger",
-      ".error-message",
-      "[class*='error']",
-      "text=/not found/i",
-      "text=/invalid/i",
-      "text=/enter a valid/i",
-    ];
-
-    for (const sel of selectors) {
-      try {
-        const el = this.page.locator(sel).first();
-        if (await el.isVisible()) {
-          const text = (await el.textContent())?.trim() ?? "";
-          if (text.toUpperCase() !== "RESET PASSWORD" && text !== "") {
-            console.log(`✅ ForgotPassword error msg [${sel}]: ${text}`);
-            return text;
-          }
-        }
-      } catch {
-        // পরের selector চেষ্টা
-      }
-    }
-
-    const body = ((await this.page.locator("body").textContent()) ?? "").toLowerCase();
-    if (body.includes("not found") || body.includes("invalid") || body.includes("@")) {
-      return "not found";
-    }
-
-    return "";
+  /** A malformed e-mail is stopped by the browser before it is sent. */
+  async expectValidationError(expected: string): Promise<void> {
+    const message = await this.email.evaluate((el: HTMLInputElement) => el.validationMessage);
+    expect(message).toContain(expected);
+    await expect(this.page).not.toHaveURL(/forgot=true/);
   }
 }

@@ -6,13 +6,11 @@ Feature: Forgot Password functionality
   @smoke @regression @ForgotPassword
   Scenario: Registered user can reset password
     Given User is on Forgot Password page
-    When User enters registered email "chyranajit@gmail.com"
-    And User clicks on Submit button
-    Then User should see success message "Password reset successfully"
+    When User requests a password reset for "chyranajit@gmail.com"
+    Then User should see success message "Password is reset successfully"
 
   @regression @ForgotPassword
-  Scenario: Unregistered user cannot reset password
+  Scenario: Malformed e-mail is rejected
     Given User is on Forgot Password page
-    When User enters unregistered email "chyranajitgmail.com"
-    And User clicks on Submit button
-    Then User should see error message "Please enter a valid email address"
+    When User requests a password reset for "chyranajitgmail.com"
+    Then User should see error message "missing an '@'"

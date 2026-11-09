@@ -1,53 +1,30 @@
 // =============================================
-// src/hooks/Hooks.ts
-// Senior QA approach:
-// - Screenshot on failure
-// - @known_issue scenarios skipped with reason
-// - Clean browser per scenario
+// src/hooks/Hooks.ts — clean browser per scenario, screenshot + page text on failure
 // =============================================
 
 import { After, Before, Status, setDefaultTimeout } from "@cucumber/cucumber";
 import { config } from "../../config/config";
 import { browserManager } from "../utils/BrowserManager";
 
-setDefaultTimeout(config.pageLoadTimeout);
+setDefaultTimeout(config.stepTimeout);
 
-const KNOWN_ISSUE_MSG =
-  "KNOWN SITE BUG: E-Commerce component on practice.qabrains.com " +
-  "fails to load ('Failed to fetch component data'). " +
-  "This is a server-side defect, not an automation issue. " +
-  "Defect: E-Commerce API endpoint returning error.";
-
-// ⚠️ @known_issue scenarios — skip gracefully, don't run browser
-Before({ tags: "@known_issue" }, async function () {
-  console.warn(`\n⚠ SKIPPING (Known Issue): ${KNOWN_ISSUE_MSG}`);
-  return "pending";
-});
-
-// 🟢 প্রতিটি normal Scenario শুরুর আগে ব্রাউজার চালু হবে
-Before({ tags: "not @known_issue" }, async function () {
+Before(async function () {
   await browserManager.initBrowser();
 });
 
-// 🔴 প্রতিটি Scenario শেষ হলে
 After(async function (scenario) {
-  // @known_issue scenarios-এর জন্য browser quit করার দরকার নেই
-  const tags = scenario.pickle.tags.map((t) => t.name);
-  if (tags.includes("@known_issue")) {
-    return;
-  }
-
-  // ❌ Scenario fail হলে screenshot নেওয়া
-  if (scenario.result?.status === Status.FAILED) {
-    try {
-      const scenarioName = scenario.pickle.name.replace(/\s+/g, "_").slice(0, 80);
-      await browserManager.takeScreenshot(`FAILED_${scenarioName}`);
-      console.log(`📸 Screenshot saved: FAILED_${scenarioName}`);
-    } catch (e) {
-      console.warn(`⚠ Screenshot failed: ${e}`);
+  try {
+    if (scenario.result?.status === Status.FAILED) {
+      const png = await browserManager.screenshot();
+      if (png) this.attach(png, "image/png");
+      // printed so a CI failure can be read straight from the log
+      const page = browserManager.getPage();
+      const body = (await page.locator("body").innerText()).slice(0, 1200);
+      console.log(`\n---- FAILED: ${scenario.pickle.name} @ ${page.url()}\n${body}\n----`);
     }
+  } catch (e) {
+    console.log(`Could not capture failure details: ${e}`);
+  } finally {
+    await browserManager.quitBrowser();
   }
-
-  // ব্রাউজার বন্ধ করা
-  await browserManager.quitBrowser();
 });

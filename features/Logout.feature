@@ -4,7 +4,7 @@ Feature: Logout Functionality
   So that my session is securely closed
 
   Background:
-    Given User launches the application
+    Given User is on the login page
     And User is logged in
 
   @smoke @regression @Logout

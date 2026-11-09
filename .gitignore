@@ -2,3 +2,6 @@
 reports/
 test-results/
 playwright-report/
+# compiled TypeScript (built by npm test)
+dist/
+node_modules/

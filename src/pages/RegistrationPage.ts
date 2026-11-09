@@ -1,124 +1,61 @@
 // =============================================
-// src/pages/RegistrationPage.ts
-// Java-এর RegistrationPage.java এর TypeScript equivalent
+// src/pages/RegistrationPage.ts — the Registration demo module
 // =============================================
 
-import { Page, Locator } from "playwright";
+import { Page, Locator, expect } from "@playwright/test";
 
 export class RegistrationPage {
-  private readonly page: Page;
+  private readonly name: Locator;
+  private readonly country: Locator;
+  private readonly account: Locator;
+  readonly email: Locator;
+  private readonly password: Locator;
+  private readonly confirmPassword: Locator;
+  private readonly registerButton: Locator;
 
-  private readonly registerLink: Locator;
-  private readonly nameField: Locator;
-  private readonly countryDropdown: Locator;
-  private readonly accountTypeDropdown: Locator;
-  private readonly emailField: Locator;
-  private readonly passwordField: Locator;
-  private readonly confirmPasswordField: Locator;
-  private readonly registerBtn: Locator;
-
-  constructor(page: Page) {
-    this.page = page;
-    this.registerLink         = page.locator("#registration span");
-    this.nameField            = page.locator("#name");
-    this.countryDropdown      = page.locator("#country");
-    this.accountTypeDropdown  = page.locator("#account");
-    this.emailField           = page.locator("#email");
-    this.passwordField        = page.locator("#password");
-    this.confirmPasswordField = page.locator("#confirm_password");
-    this.registerBtn          = page.locator("button[type='submit']");
+  constructor(private readonly page: Page) {
+    this.name = page.locator("#name");
+    this.country = page.locator("#country");
+    this.account = page.locator("#account");
+    this.email = page.locator("#email");
+    this.password = page.locator("#password");
+    this.confirmPassword = page.locator("#confirm_password");
+    this.registerButton = page.locator("form button[type='submit']");
   }
 
-  async openRegistrationPage(): Promise<void> {
-    if (!this.page.url().includes("registration")) {
-      await this.registerLink.click();
-    }
-    await this.page.waitForURL("**/registration**");
-    await this.page.waitForLoadState();
+  /** The menu item ids are generated per page load, so the module is opened by its URL. */
+  async open(): Promise<void> {
+    await this.page.goto("/registration");
+    await expect(this.name).toBeVisible();
   }
 
-  async enterRegistrationDetails(
-    fullName: string,
-    country: string,
-    accountType: string,
-    email: string,
-    password: string,
-    confirmPassword: string
-  ): Promise<void> {
-    // ✅ Unique email generate করা (Java-এর System.currentTimeMillis() এর মতো)
-    const finalEmail =
-      email === "rezaulkarimqa25@gmail.com"
-        ? `testuser${Date.now()}@mailtest.com`
-        : email;
-
-    console.log(`📧 Registering with email: ${finalEmail}`);
-
-    await this.nameField.fill(fullName);
-    await this.countryDropdown.selectOption(country);
-    await this.accountTypeDropdown.selectOption(accountType);
-    await this.emailField.fill(finalEmail);
-    await this.passwordField.fill(password);
-    await this.confirmPasswordField.fill(confirmPassword);
+  async fill(details: {
+    name: string; country: string; account: string; email: string; password: string; confirm: string;
+  }): Promise<void> {
+    await this.name.fill(details.name);
+    await this.country.selectOption(details.country);
+    await this.account.selectOption(details.account);
+    await this.email.fill(details.email);
+    await this.password.fill(details.password);
+    await this.confirmPassword.fill(details.confirm);
   }
 
-  async clickRegister(): Promise<void> {
-    await this.registerBtn.click();
-    await this.page.waitForLoadState();
-    await this.page.waitForTimeout(2000);
-
-    const body = (await this.page.locator("body").textContent()) ?? "";
-    console.log(`📄 Page after register (first 400 chars): ${body.substring(0, 400)}`);
-    console.log(`🌐 URL after register: ${this.page.url()}`);
+  async submit(): Promise<void> {
+    await this.registerButton.click();
   }
 
-  async isRegistrationSuccessful(): Promise<boolean> {
-    const url  = this.page.url();
-    const body = ((await this.page.locator("body").textContent()) ?? "").toLowerCase();
-
-    console.log(`🔍 Checking success. URL: ${url}`);
-
-    const keywords = [
-      "successfully", "registered", "welcome", "thank you",
-      "account created", "success", "confirm",
-    ];
-    for (const kw of keywords) {
-      if (body.includes(kw)) {
-        console.log(`✅ Found success keyword: ${kw}`);
-        return true;
-      }
-    }
-
-    const selectors = [
-      ".alert-success", "[class*='success']", "#success-msg",
-      ".success-message", "[role='alert']",
-    ];
-    for (const sel of selectors) {
-      try {
-        if (await this.page.locator(sel).first().isVisible()) {
-          console.log(`✅ Success element: ${sel}`);
-          return true;
-        }
-      } catch {
-        // ignore
-      }
-    }
-
-    const redirected = !url.includes("registration");
-    console.log(`URL redirect check: ${redirected} | URL: ${url}`);
-    return redirected;
+  async expectRegistered(): Promise<void> {
+    await expect(this.page.getByText(/successfully/i).first()).toBeVisible();
   }
 
-  async isEmailValidationMessageDisplayed(): Promise<boolean> {
-    const msg = await this.emailField.evaluate(
-      (el: HTMLInputElement) => el.validationMessage
-    );
-    console.log(`HTML5 validation: ${msg}`);
-    if (msg) return true;
-
-    return (
-      (await this.page
-        .locator("#email + span, #email ~ span, .field-error, [class*='error']")
-        .count()) > 0
-    );
+  /** The browser blocks the submit and reports why on the field itself. */
+  async expectEmailRejected(): Promise<void> {
+    const state = await this.email.evaluate((el: HTMLInputElement) => ({
+      valid: el.validity.valid,
+      message: el.validationMessage,
+    }));
+    expect(state.valid, "e-mail field should be invalid").toBe(false);
+    expect(state.message).toContain("@");
+    await expect(this.page.getByText(/successfully/i)).toHaveCount(0);
   }
 }

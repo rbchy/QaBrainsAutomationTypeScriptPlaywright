@@ -3,13 +3,15 @@
   "version": "1.0.0",
   "description": "QA Brains Automation - TypeScript + Playwright + Cucumber",
   "scripts": {
+    "build": "tsc",
+    "pretest": "npm run build",
     "test": "cucumber-js",
-    "test:smoke": "cucumber-js --tags @smoke",
-    "test:regression": "cucumber-js --tags @regression",
-    "test:login": "cucumber-js --tags @Login",
-    "test:logout": "cucumber-js --tags @Logout",
-    "test:registration": "cucumber-js --tags @Registration",
-    "test:cart": "cucumber-js --tags @CartCheckout"
+    "test:smoke": "npm run build && cucumber-js --tags @smoke",
+    "test:regression": "npm run build && cucumber-js --tags @regression",
+    "test:login": "npm run build && cucumber-js --tags @Login",
+    "test:logout": "npm run build && cucumber-js --tags @Logout",
+    "test:registration": "npm run build && cucumber-js --tags @Registration",
+    "test:cart": "npm run build && cucumber-js --tags @Cart"
   },
   "dependencies": {
     "@playwright/test": "^1.53.0",

@@ -1,28 +1,22 @@
 // =============================================
-// config/config.ts
-// Java-এর config.properties + ConfigReader এর TypeScript equivalent
+// config/config.ts — one place for URLs, accounts and run settings.
+// Environment variables win: HEADLESS=true (CI), BROWSER=firefox|webkit.
 // =============================================
 
 export const config = {
-  // Application URL
   url: "https://practice.qabrains.com/",
 
-  // Browser Configuration
-  browser: "chromium" as "chromium" | "firefox" | "webkit",
-  headless: false,
-  timeout: 10_000,         // milliseconds
-  pageLoadTimeout: 30_000, // milliseconds
+  browser: (process.env.BROWSER ?? "chromium") as "chromium" | "firefox" | "webkit",
+  headless: (process.env.HEADLESS ?? "false").toLowerCase() === "true",
+  timeout: 15_000, // element / assertion timeout (ms)
+  stepTimeout: 60_000, // one Cucumber step (ms)
 
-  // Test Data
+  // Public practice accounts published by QA Brains
   validEmail: "qa_testers@qabrains.com",
   validPassword: "Password123",
+  shopEmail: "test@qabrains.com",
+  shopPassword: "Password123",
 
-  // Execution Settings
-  screenshotOnFailure: true,
-  retryFailedTests: true,
-  parallelExecution: false,
-
-  // Viewport
-  viewportWidth: 1920,
-  viewportHeight: 1080,
+  viewportWidth: 1440,
+  viewportHeight: 900,
 };

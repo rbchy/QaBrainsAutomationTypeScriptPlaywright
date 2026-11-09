@@ -1,22 +1,18 @@
 Feature: Regression Test Suite
-  As a QA team
-  We want to verify core functionalities
-  So that the system remains stable after changes
 
-  @regression  @known_issue
+  Background:
+    Given User is logged in to the e-commerce site
+
+  @regression @Cart
   Scenario: R-01 Add multiple products to cart
-    Given User launches the application
-    When User adds products to cart
-    Then Products should be added successfully
+    When User adds 3 products to cart
+    Then 3 products should be in the cart
 
-  @regression
-  Scenario: R-02 Update product quantity
-    Given User launches the application
-    When User updates product quantity
-    Then Quantity should be updated
+  @regression @Shop
+  Scenario: R-02 Open product details
+    When User opens the details of the first product
+    Then The product details page should show its name and price
 
-  @regression
-  Scenario: R-03 Search invalid item
-    Given User launches the application
-    When User searches for invalid item
-    Then No result should be displayed
+  @regression @Shop
+  Scenario: R-03 Every product shows a name, price and cart button
+    Then Every product card should show a name, a price and an "Add to cart" button

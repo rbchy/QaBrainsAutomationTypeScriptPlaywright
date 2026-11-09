@@ -1,11 +1,13 @@
+// Cucumber runs the compiled JavaScript in dist/ — `npm test` builds it first.
 module.exports = {
   default: {
-    require: ['dist/src/hooks/*.js', 'dist/src/steps/*.js'],
+    require: ["dist/src/hooks/*.js", "dist/src/steps/*.js"],
     format: [
-      'html:reports/cucumber-report.html',
-      'json:reports/cucumber-report.json',
-      'progress-bar'
+      "progress",
+      "html:reports/cucumber-report.html",
+      "json:reports/cucumber-report.json",
+      "junit:reports/cucumber-report.xml",
     ],
-    formatOptions: { snippetInterface: 'async-await' }
-  }
-}
+    formatOptions: { snippetInterface: "async-await" },
+  },
+};

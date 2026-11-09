@@ -4,19 +4,14 @@ Feature: User Registration
   So that I can access the application
 
   Background:
-    Given User launches the application
-    And User is on homepage
+    Given User is on the registration page
 
   @smoke @regression @Registration
-  Scenario: Successful user registration with valid email
-    When User navigates to registration page
-    And User enters valid registration details with email "chyranajit@gmail.com"
-    And User clicks on register button
+  Scenario: Successful user registration with a unique email
+    When User registers with a unique email
     Then User should be registered successfully
 
   @regression @Registration
   Scenario: Registration should fail with invalid email
-    When User navigates to registration page
-    And User enters registration details with email "chyranajitgmail.com"
-    And User clicks on register button
+    When User registers with email "chyranajitgmail.com"
     Then Email validation error message should be displayed

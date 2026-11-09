@@ -4,7 +4,7 @@ Feature: Login Functionality
   So that I can access my account
 
   Background:
-    Given User launches the application
+    Given User is on the login page
 
   @smoke @regression @Login
   Scenario: Login with valid credentials
@@ -14,4 +14,4 @@ Feature: Login Functionality
   @regression @Login
   Scenario: Login with invalid credentials
     When User enters invalid username and password
-    Then Error message should be displayed
+    Then Error message "Your email and password both are invalid!" should be displayed

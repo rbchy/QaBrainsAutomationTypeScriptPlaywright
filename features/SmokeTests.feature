@@ -1,7 +1,4 @@
-Feature: Smoke Test Suite
-  As a QA team
-  We want to verify critical application flows
-  So that we can ensure the build is stable
+Feature: Smoke Tests
 
   @smoke
   Scenario: S-01 Verify Home page loads
@@ -9,13 +6,18 @@ Feature: Smoke Test Suite
     Then Home page should load successfully
 
   @smoke
-  Scenario: S-02 Verify navigation links
+  Scenario: S-02 Verify demo module navigation
     Given User launches the application
-    When User clicks on Catalog, About and Blog
-    Then Pages should navigate correctly
+    When User opens each demo module from the menu
+      | Registration    | registration    |
+      | Forgot Password | forgot-password |
+      | Form Submission | form-submission |
+      | Drag and Drop List | drag          |
+    Then Each module page should open
 
   @smoke
-  Scenario: S-03 Verify wishlist and refer a friend functionality
+  Scenario: S-03 Verify the e-commerce demo site opens
     Given User launches the application
-    When User clicks on Wish list and Refer a Friend
-    Then Pages should open successfully
+    When User opens each demo module from the menu
+      | E-Commerce Site | ecommerce |
+    Then Each module page should open

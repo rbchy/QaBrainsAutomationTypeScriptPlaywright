@@ -1,116 +1,57 @@
 // =============================================
-// src/pages/LoginPage.ts
-// Java-এর LoginPage.java এর TypeScript equivalent
+// src/pages/LoginPage.ts — the Login demo on the practice-site home page
 // =============================================
 
-import { Page, Locator } from "playwright";
+import { Page, Locator, expect } from "@playwright/test";
 
 export class LoginPage {
-  private readonly page: Page;
+  private readonly email: Locator;
+  private readonly password: Locator;
+  private readonly loginButton: Locator;
+  readonly successMessage: Locator;
 
-  // ===== Locators (Java-এর private final Locator এর মতো) =====
-  private readonly emailField: Locator;
-  private readonly passwordField: Locator;
-  private readonly loginBtn: Locator;
-
-  constructor(page: Page) {
-    this.page = page;
-
-    // Java: page.locator("#email, input[type='email']").first()
-    this.emailField = page
-      .locator("#email, input[type='email'], input[name='email']")
-      .first();
-
-    this.passwordField = page
-      .locator("#password, input[type='password']")
-      .first();
-
-    this.loginBtn = page
-      .locator("button[type='submit'], button:has-text('Login'), button:has-text('Sign In')")
-      .first();
+  constructor(private readonly page: Page) {
+    this.email = page.locator("#email");
+    this.password = page.locator("#password");
+    this.loginButton = page.locator("form button[type='submit']", { hasText: "Login" });
+    this.successMessage = page.locator("#success-msg");
   }
 
-  // ===== Login Action =====
+  async open(): Promise<void> {
+    await this.page.goto("/");
+    await expect(this.email).toBeVisible();
+  }
+
   async login(email: string, password: string): Promise<void> {
-    const url = this.page.url();
-
-    // Login page-এ না থাকলে navigate করা
-    if (!url.includes("login") && !url.includes("sign-in")) {
-      const loginLink = this.page
-        .locator(
-          "a:has-text('Login'), a:has-text('Sign In'), a:has-text('Log In'), [href*='login'], [href*='sign-in']"
-        )
-        .first();
-
-      if (await loginLink.isVisible()) {
-        await loginLink.click();
-        await this.page.waitForLoadState();
-      } else {
-        await this.page.goto("https://practice.qabrains.com/login");
-        await this.page.waitForLoadState();
-      }
-    }
-
-    await this.emailField.fill(email);
-    await this.passwordField.fill(password);
-    await this.loginBtn.click();
-    await this.page.waitForLoadState();
-    await this.page.waitForTimeout(1000);
+    await this.email.fill(email);
+    await this.password.fill(password);
+    await this.loginButton.click();
   }
 
-  // ===== Login সফল কিনা যাচাই =====
-  async isLoginSuccessful(): Promise<boolean> {
-    const url = this.page.url();
-
-    const successSelectors = [
-      ".dashboard, #dashboard",
-      "text=/welcome/i",
-      "text=/logged in/i",
-      "a:has-text('Logout'), a:has-text('Log Out'), a:has-text('Sign Out')",
-      "[class*='dashboard'], [class*='account']",
-    ];
-
-    for (const sel of successSelectors) {
-      try {
-        if (await this.page.locator(sel).first().isVisible()) {
-          console.log(`✅ Login success detected via: ${sel}`);
-          return true;
-        }
-      } catch {
-        // পরের selector চেষ্টা করো
-      }
-    }
-
-    const urlChanged = !url.includes("login") && !url.includes("sign-in");
-    console.log(`Login URL check: ${url} → ${urlChanged ? "PASSED" : "FAILED"}`);
-    return urlChanged;
+  async expectLoggedIn(): Promise<void> {
+    await expect(this.page).toHaveURL(/logged=true/);
+    await expect(this.successMessage).toBeVisible();
+    await expect(this.successMessage).not.toHaveText("");
   }
 
-  // ===== Error দেখাচ্ছে কিনা যাচাই =====
-  async isErrorDisplayed(): Promise<boolean> {
-    const errorSelectors = [
-      ".error, .alert-danger, .alert-error",
-      "[class*='error'], [class*='invalid']",
-      "text=/invalid/i",
-      "text=/incorrect/i",
-      "text=/wrong/i",
-      "text=/failed/i",
-    ];
+  async expectInvalidLoginError(message: string): Promise<void> {
+    await expect(this.page.getByText(message)).toBeVisible();
+    await expect(this.successMessage).toHaveCount(0);
+    await expect(this.page).not.toHaveURL(/logged=true/);
+  }
 
-    for (const sel of errorSelectors) {
-      try {
-        if (await this.page.locator(sel).first().isVisible()) {
-          console.log(`✅ Login error detected via: ${sel}`);
-          return true;
-        }
-      } catch {
-        // পরের selector চেষ্টা করো
-      }
-    }
+  async logout(): Promise<void> {
+    await this.page
+      .locator("a, button")
+      .filter({ hasText: /^\s*log ?out\s*$/i })
+      .filter({ visible: true })
+      .first()
+      .click();
+  }
 
-    const stillOnLogin =
-      this.page.url().includes("login") || this.page.url().includes("sign-in");
-    console.log(`Login error URL check: still on login? ${stillOnLogin}`);
-    return stillOnLogin;
+  async expectLoggedOut(): Promise<void> {
+    await expect(this.page).not.toHaveURL(/logged=true/);
+    await expect(this.loginButton).toBeVisible();
+    await expect(this.successMessage).toHaveCount(0);
   }
 }
